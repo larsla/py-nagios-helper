@@ -1,0 +1,4 @@
+nagios-helper - Reads a nagios.cmd fifo for external check commands and sends them to a remote NSCA daemon
+
+Installation:
+sudo apt-get install libmcrypt-dev python-virtualenv build-essential
