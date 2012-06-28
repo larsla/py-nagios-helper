@@ -7,13 +7,14 @@ Author: Lars Larsson <lars@lars.la>
 
 import multiprocessing
 import os
+import time
 from readthread import ReadThread
 from sendthread import SendThread
 
 fifoname = "nagios.cmd"
 nsca_host = "localhost"
 
-MAXTHREADS = 4
+MAXTHREADS = 10
 
 threads = []
 
@@ -27,11 +28,19 @@ if __name__=="__main__":
     """ Initialize queue """
     queue = multiprocessing.Queue()
 
-    """ Start the read thread """
-    threads.append(ReadThread(0, fifoname, queue))
-    threads[0].start()
+    try:
+        """ Start the read thread """
+        threads.append(ReadThread(0, fifoname, queue))
+        threads[0].start()
 
-    """ Start our send threads """
-    for i in range(1, MAXTHREADS):
-        threads.append(SendThread(i, queue, nsca_host))
-        threads[i].start()
+        """ Start our send threads """
+        for i in range(1, MAXTHREADS):
+            threads.append(SendThread(i, queue, nsca_host))
+            threads[i].start()
+
+        while 1:
+            time.sleep(10)
+    except KeyboardInterrupt:
+        print "Got KeyboardInterrupt"
+        for i in range(0, MAXTHREADS):
+            threads[i].terminate()
