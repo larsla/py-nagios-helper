@@ -25,15 +25,15 @@ if __name__=="__main__":
     if not os.path.exists(fifoname):
         create_fifo(fifoname)
 
-    """ Initialize queue """
+    # Initialize queue
     queue = multiprocessing.Queue()
 
     try:
-        """ Start the read thread """
+        # Start the read thread
         threads.append(ReadThread(0, fifoname, queue))
         threads[0].start()
 
-        """ Start our send threads """
+        # Start our send threads
         for i in range(1, MAXTHREADS):
             threads.append(SendThread(i, queue, nsca_host))
             threads[i].start()

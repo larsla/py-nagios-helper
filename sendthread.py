@@ -1,11 +1,12 @@
 import multiprocessing
 from pynsca import NSCANotifier
+import socket
 import re
 import time
 
 class SendThread(multiprocessing.Process):
     def __init__(self, id, queue, nsca_host, nsca_port=5667, nsca_crypt=1, password=None):
-        print "Initialized SendThread id " + str(id)
+        print "Initialized SendThread id %i" % id
         self.quit = False
         self.tid = id
         self.queue = queue
@@ -14,7 +15,7 @@ class SendThread(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
 
     def run(self):
-        print str(self.tid) + " | Running SendThread id "
+        print "%i | Running SendThread" % self.tid
         while self.quit is False:
             if self.queue.empty():
                 time.sleep(1)
@@ -23,11 +24,16 @@ class SendThread(multiprocessing.Process):
                 line = self.queue.get()
             (t, host, service, code, output) = self.parse(line)
             if t > (int(time.time()) - 60):
-                self.nsca.svc_result(host, service, code, output)
+                r = self.nsca.svc_result(host, service, code, output)
+                if not r:
+                    print "Socket error, putting event back on queue and sleeping for a while. Error was: %s" % str(r)
+                    self.queue.put(line)
+                    time.sleep(1)
             else:
-                print str(self.tid) + " | " + str(t) + " " + host + ";" + service + ";" + str(code) + ";" + output + " | Too old, dropping"
+                #print str(self.tid) + " | " + str(t) + " " + host + ";" + service + ";" + str(code) + ";" + output + " | Too old, dropping"
+                print "%i | %i %s;%s;%i;%s | Too old, dropping" % (self.tid, t,host,service,code,output)
             time.sleep(0.001)
-        print str(self.tid) + " | Stopping loop"
+        print "%i | Stopping loop" % self.tid
 
     def parse(self, line):
         r = re.match(r'(?P<time>[0-9]+)\sPROCESS_SERVICE_CHECK_RESULT;(?P<host>\S+);(?P<service>\S+);(?P<code>[0-9]+);(?P<output>.+)\n', line)

@@ -3,7 +3,7 @@ import time
 
 class ReadThread(multiprocessing.Process):
     def __init__(self, id, fifoname, queue):
-        print "Initialized ReadThread id " + str(id)
+        print "Initialized ReadThread id %i" % id
         self.quit = False
         self.tid = id
         self.fifoname = fifoname
@@ -12,7 +12,7 @@ class ReadThread(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
 
     def run(self):
-        print str(self.tid) + "Running ReadThread id "
+        print "%i | Running ReadThread" % self.tid
         self.f = open(self.fifoname, 'r')
         while self.quit is False:
             line = self.f.readline()
