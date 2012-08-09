@@ -1,2 +1,4 @@
 pynsca
 python-mcrypt
+daemonize
+setproctitle

@@ -22,7 +22,12 @@ class SendThread(multiprocessing.Process):
                 continue
             else:
                 line = self.queue.get()
-            (t, host, service, code, output) = self.parse(line)
+
+            parsed = self.parse(line.replace('[', '').replace(']', ''))
+            if parsed:
+                (t, host, service, code, output) = parsed
+            else:
+                continue
             if t > (int(time.time()) - 60):
                 r = self.nsca.svc_result(host, service, code, output)
                 if not r:
@@ -36,8 +41,12 @@ class SendThread(multiprocessing.Process):
         print "%i | Stopping loop" % self.tid
 
     def parse(self, line):
-        r = re.match(r'(?P<time>[0-9]+)\sPROCESS_SERVICE_CHECK_RESULT;(?P<host>\S+);(?P<service>\S+);(?P<code>[0-9]+);(?P<output>.+)\n', line)
-        return (int(r.group("time")), r.group("host"), r.group("service"), int(r.group("code")), r.group("output"))
+        try:
+            r = re.match(r'(?P<time>[0-9]+)\sPROCESS_SERVICE_CHECK_RESULT;(?P<host>\S+);(?P<service>\S+);(?P<code>[0-9]+);(?P<output>.+)\n', line)
+            return (int(r.group("time")), r.group("host"), r.group("service"), int(r.group("code")), r.group("output"))
+        except AttributeError:
+            print "AttributeError while parsing line: %s" % line
+            return False
 
     def quit(self):
         self.quit = True
