@@ -29,6 +29,7 @@ pidfile = str(Config.get('nagios-helper', 'pidfile'))
 fifoname = str(Config.get('nagios-helper', 'fifoname'))
 user = str(Config.get('nagios-helper', 'user'))
 group = str(Config.get('nagios-helper', 'group'))
+debug = bool(int(Config.get('nagios-helper', 'debug')))
 
 nsca_host = str(Config.get('nsca', 'host'))
 nsca_port = int(Config.get('nsca', 'port'))
@@ -59,12 +60,12 @@ def run():
 
     try:
         # Start the read thread
-        threads.append(ReadThread(0, fifoname, queue))
+        threads.append(ReadThread(0, fifoname, queue, debug=debug))
         threads[0].start()
 
         # Start our send threads
         for i in range(1, MAXTHREADS):
-            threads.append(SendThread(i, queue, nsca_host, nsca_port=nsca_port, nsca_crypt=nsca_crypt, password=nsca_password))
+            threads.append(SendThread(i, queue, nsca_host, nsca_port=nsca_port, nsca_crypt=nsca_crypt, password=nsca_password, debug=debug))
             threads[i].start()
 
         while 1:

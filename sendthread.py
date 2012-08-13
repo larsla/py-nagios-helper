@@ -5,12 +5,13 @@ import re
 import time
 
 class SendThread(multiprocessing.Process):
-    def __init__(self, id, queue, nsca_host, nsca_port=5667, nsca_crypt=1, password=None):
+    def __init__(self, id, queue, nsca_host, nsca_port=5667, nsca_crypt=1, password=None, debug=False):
         print "Initialized SendThread id %i" % id
         self.quit = False
         self.tid = id
         self.queue = queue
         self.nsca = NSCANotifier(nsca_host, monitoring_port=nsca_port, encryption_mode=nsca_crypt, password=password)
+        self.debug = debug
 
         multiprocessing.Process.__init__(self)
 
@@ -22,6 +23,8 @@ class SendThread(multiprocessing.Process):
                 continue
             else:
                 line = self.queue.get()
+                if self.debug:
+                    print "Line from queue: %s" % line
 
             parsed = self.parse(line.replace('[', '').replace(']', ''))
             if parsed:
@@ -30,6 +33,8 @@ class SendThread(multiprocessing.Process):
                 continue
             if t > (int(time.time()) - 60):
                 r = self.nsca.svc_result(host, service, code, output)
+                if self.debug:
+                    print "Line sent: %s" % line
                 if not r:
                     print "Socket error, putting event back on queue and sleeping for a while. Error was: %s" % str(r)
                     self.queue.put(line)
